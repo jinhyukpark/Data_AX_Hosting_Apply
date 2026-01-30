@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Plus, ArrowRight, FileSignature } from "lucide-react";
+import { redirect } from "next/navigation";
 
 async function getMyTickets(userId: string) {
     return await prisma.ticket.findMany({
@@ -17,6 +18,11 @@ async function getMyTickets(userId: string) {
 
 export default async function ClientDashboard() {
     const session = await getSession();
+
+    if (!session || !session.user) {
+        redirect("/login");
+    }
+
     const tickets = await getMyTickets(session.user.id);
 
     return (
@@ -26,13 +32,6 @@ export default async function ClientDashboard() {
                     <h2 className="text-3xl font-bold tracking-tight text-white">나의 요청 내역</h2>
                     <p className="text-zinc-400 mt-2">할당된 스펙 작성 폼과 상태를 확인하세요.</p>
                 </div>
-                {/* 
-                <Link href="/client/new">
-                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-0 shadow-lg shadow-purple-500/20">
-                        <Plus className="w-4 h-4 mr-2" /> New Request
-                    </Button>
-                </Link> 
-                */}
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -9,51 +9,44 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String   // Hashed or simple for mock
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
   name      String?
   company   String?
-  role      String   @default("CLIENT") // ADMIN, CLIENT
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tickets   Ticket[]
+  role      String    @default("CLIENT")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   messages  Message[]
+  tickets   Ticket[]
 }
 
 model Ticket {
-  id          String    @id @default(cuid())
-  title       String
-  description String?   // Short description
-  status      String    @default("PENDING") // PENDING, IN_PROGRESS, REVIEW, DONE, REJECTED
-  type        String    // DATASET, API, MCP, AGENT, MIXED
-  formData    String    // JSON string of the full form data
-  
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  
-  messages    Message[]
-  
-  isTemplate  Boolean   @default(false)
-  templateName String?
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  status         String    @default("PENDING")
+  type           String
+  formData       String
+  userId         String
+  isTemplate     Boolean   @default(false)
+  templateName   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   fromTemplateId String?
+  messages       Message[]
   fromTemplate   Ticket?   @relation("TemplateToTicket", fields: [fromTemplateId], references: [id])
   derivedTickets Ticket[]  @relation("TemplateToTicket")
+  user           User      @relation(fields: [userId], references: [id])
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  content   String
-  senderId  String
-  sender    User     @relation(fields: [senderId], references: [id])
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id])
-  
-  isInternal Boolean @default(false) // If true, only visible to admins ? (requirements didn't specify, but good to have)
-
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  content    String
+  senderId   String
+  ticketId   String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  sender     User     @relation(fields: [senderId], references: [id])
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
 }

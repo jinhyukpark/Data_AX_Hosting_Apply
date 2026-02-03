@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 
-export async function assignTemplateToUser(templateId: string, userId: string) {
+export async function assignTemplateToUser(templateId: string, userIdOrEmail: string) {
     const session = await getSession();
     if (!session || session.user.role !== 'ADMIN') return { success: false, message: "Unauthorized" };
 
@@ -12,16 +12,35 @@ export async function assignTemplateToUser(templateId: string, userId: string) {
         const template = await prisma.ticket.findUnique({ where: { id: templateId } });
         if (!template) return { success: false, message: "Template not found" };
 
+        let finalUserId = userIdOrEmail;
+
+        // Check if it's an email (heuristic)
+        if (userIdOrEmail.includes('@')) {
+            let user = await prisma.user.findUnique({ where: { email: userIdOrEmail } });
+            if (!user) {
+                // Create a temporary user
+                user = await prisma.user.create({
+                    data: {
+                        email: userIdOrEmail,
+                        password: 'temp-password', // Should be hashed or handled properly
+                        role: 'CLIENT',
+                        name: userIdOrEmail.split('@')[0]
+                    }
+                });
+            }
+            finalUserId = user.id;
+        }
+
         // Clone the template to a new ticket for the user
         await prisma.ticket.create({
             data: {
-                title: template.title, // Or append " - Assigned"
+                title: template.templateName || template.title,
                 description: template.description,
                 type: template.type,
                 formData: template.formData,
                 status: 'PENDING',
-                userId: userId,
-                isTemplate: false, // This is a real ticket
+                userId: finalUserId,
+                isTemplate: false,
                 fromTemplateId: template.id
             }
         });
